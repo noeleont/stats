@@ -1,0 +1,11 @@
+CREATE TABLE Entry (
+    date TEXT NOT NULL
+);
+
+insertEntry:
+INSERT  INTO Entry(date)
+VALUES(?);
+
+selectAllEntriesInfo:
+SELECT Entry.*
+FROM Entry;
