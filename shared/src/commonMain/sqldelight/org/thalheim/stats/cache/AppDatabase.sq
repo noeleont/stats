@@ -1,9 +1,9 @@
 CREATE TABLE Entry (
-    date TEXT NOT NULL
+    dateUTC INTEGER NOT NULL
 );
 
 insertEntry:
-INSERT  INTO Entry(date)
+INSERT  INTO Entry(dateUTC)
 VALUES(?);
 
 selectAllEntriesInfo:
