@@ -9,13 +9,12 @@ class StatsSDK(databaseDriverFactory: DatabaseDriverFactory) {
     private val database = Database(databaseDriverFactory)
 
     @Throws(Exception::class)
-    suspend fun getEntries() {
-        database.getAllEntries()
+    suspend fun getEntries(): List<Entry> {
+        return database.getAllEntries()
     }
 
     @Throws(Exception::class)
     suspend fun addEntry() {
-        val entry = Entry(date = Clock.System.now())
-        database.insertEntry(entry)
+        database.insertEntry(Clock.System.now())
     }
 }

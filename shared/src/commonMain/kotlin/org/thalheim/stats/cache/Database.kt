@@ -9,21 +9,22 @@ internal class Database(databaseDriverFactory: DatabaseDriverFactory) {
     private val dbQuery = database.appDatabaseQueries
 
     internal fun getAllEntries(): List<Entry> {
-        return dbQuery.selectAllEntriesInfo()
+        return dbQuery.selectAllEntriesInfo(::mapEntrySelecting)
             .executeAsList()
-            .map { mapEntrySelecting(it) }
     }
 
     private fun mapEntrySelecting(
+        id: Long,
         dateUTC: Long
     ): Entry {
         return Entry(
+            id = id,
             date = Instant.fromEpochMilliseconds(dateUTC)
         )
     }
 
-    internal fun insertEntry(entry: Entry) {
-        dbQuery.insertEntry(entry.date.toEpochMilliseconds())
+    internal fun insertEntry(date: Instant) {
+        dbQuery.insertEntry(date.toEpochMilliseconds())
     }
 
 }
