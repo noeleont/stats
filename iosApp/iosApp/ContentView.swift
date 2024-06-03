@@ -2,32 +2,60 @@ import SwiftUI
 import Shared
 
 struct ContentView: View {
-    @State private var showContent = false
+    @ObservedObject private(set) var viewModel: ViewModel
+    
     var body: some View {
-        VStack {
-            Button("Click me!") {
-                withAnimation {
-                    showContent = !showContent
-                }
+        NavigationStack {
+            List(viewModel.entries) { entry in
+                Text(entry.date.description())
             }
-
-            if showContent {
-                VStack(spacing: 16) {
-                    Image(systemName: "swift")
-                        .font(.system(size: 200))
-                        .foregroundColor(.accentColor)
-                    Text("SwiftUI: \(Greeting().greet())")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        viewModel.addEntry()
+                    }) {
+                        Image(systemName: "plus")
+                    }
                 }
-                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding()
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+
+extension ContentView {
+    @MainActor
+    class ViewModel: ObservableObject {
+        @Published var entries = [Entry]()
+        let helper: KoinHelper = KoinHelper()
+        
+        init() {
+            loadEntries()
+        }
+        
+        func loadEntries() {
+            Task {
+                do {
+                    self.entries = try await helper.getEntries()
+                } catch {
+                    print(error.localizedDescription)
+                }
+            }
+        }
+        
+        func addEntry() {
+            Task {
+                do {
+                    try await helper.addEntry()
+                    self.entries = try await helper.getEntries()
+                } catch {
+                    print(error.localizedDescription)
+                }
+                
+            }
+        }
+        
     }
 }
+
+extension Entry: Identifiable {}
