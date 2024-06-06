@@ -1,5 +1,6 @@
 package org.thalheim.stats
 
+import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import org.thalheim.stats.cache.Database
 import org.thalheim.stats.cache.DatabaseDriverFactory
@@ -16,5 +17,9 @@ class StatsSDK(databaseDriverFactory: DatabaseDriverFactory) {
     @Throws(Exception::class)
     suspend fun addEntry() {
         database.insertEntry(Clock.System.now())
+    }
+
+    fun entrySubscription(): Flow<List<Entry>> {
+        return database.entrySubscription()
     }
 }

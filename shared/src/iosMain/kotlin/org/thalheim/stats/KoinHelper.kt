@@ -1,5 +1,6 @@
 package org.thalheim.stats
 
+import kotlinx.coroutines.flow.Flow
 import org.koin.core.component.KoinComponent
 import org.thalheim.stats.entity.Entry
 import org.koin.core.component.inject
@@ -16,6 +17,10 @@ class KoinHelper : KoinComponent {
 
     suspend fun addEntry() {
         sdk.addEntry()
+    }
+
+    fun entrySubscription(): Flow<List<Entry>> {
+        return sdk.entrySubscription()
     }
 }
 

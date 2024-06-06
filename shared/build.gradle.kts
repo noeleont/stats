@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.kotlinxSerialization)
     alias(libs.plugins.sqldelight)
+    alias(libs.plugins.skie)
 }
 
 kotlin {
@@ -33,6 +34,7 @@ kotlin {
             implementation(libs.runtime)
             implementation(libs.kotlinx.datetime)
             implementation(libs.koin.core)
+            implementation(libs.sqldelight.coroutines.extensions)
         }
         androidMain.dependencies {
             implementation(libs.android.driver)
@@ -60,5 +62,11 @@ sqldelight {
         create("AppDatabase") {
             packageName.set("org.thalheim.stats.cache")
         }
+    }
+}
+
+skie {
+    analytics {
+        enabled.set(false)
     }
 }

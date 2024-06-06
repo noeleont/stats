@@ -2,7 +2,7 @@ import SwiftUI
 import Shared
 
 struct ContentView: View {
-    @ObservedObject private(set) var viewModel: ViewModel
+    @ObservedObject var viewModel: ViewModel = ViewModel()
     
     var body: some View {
         NavigationStack {
@@ -18,40 +18,29 @@ struct ContentView: View {
                     }
                 }
             }
+            .task {
+                await viewModel.activate()
+            }
         }
     }
 }
 
 
 extension ContentView {
-    @MainActor
     class ViewModel: ObservableObject {
         @Published var entries = [Entry]()
         let helper: KoinHelper = KoinHelper()
         
-        init() {
-            loadEntries()
-        }
-        
-        func loadEntries() {
-            Task {
-                do {
-                    self.entries = try await helper.getEntries()
-                } catch {
-                    print(error.localizedDescription)
-                }
+        @MainActor
+        func activate() async {
+            for await entries in helper.entrySubscription() {
+                self.entries = entries
             }
         }
         
         func addEntry() {
-            Task {
-                do {
-                    try await helper.addEntry()
-                    self.entries = try await helper.getEntries()
-                } catch {
-                    print(error.localizedDescription)
-                }
-                
+            Task.detached {
+                try? await self.helper.addEntry()
             }
         }
         
