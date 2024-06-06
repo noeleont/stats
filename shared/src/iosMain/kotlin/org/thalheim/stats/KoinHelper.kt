@@ -7,6 +7,7 @@ import org.koin.core.component.inject
 import org.thalheim.stats.cache.IOSDatabaseDriverFactory
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
+import org.thalheim.stats.entity.TotalEntriesPerPeriod
 
 class KoinHelper : KoinComponent {
     private val sdk: StatsSDK by inject<StatsSDK>()
@@ -19,8 +20,8 @@ class KoinHelper : KoinComponent {
         sdk.addEntry()
     }
 
-    fun entrySubscription(): Flow<List<Entry>> {
-        return sdk.entrySubscription()
+    fun entrySubscription(period: String): Flow<List<TotalEntriesPerPeriod>> {
+        return sdk.entrySubscription(period)
     }
 }
 

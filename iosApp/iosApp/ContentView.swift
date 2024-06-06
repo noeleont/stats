@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 import Shared
 
 struct ContentView: View {
@@ -6,8 +7,25 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            List(viewModel.entries) { entry in
-                Text(entry.date.description())
+            VStack {
+                Picker("Period", selection: $viewModel.selectedPeriod) {
+                    Text("Day").tag("day")
+                    Text("Week").tag("week")
+                    Text("Month").tag("month")
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                Chart(viewModel.entries) { entry in
+                    BarMark(
+                        x: .value("Date", entry.period),
+                        y: .value("Total Entries", entry.totalEntries)
+                    )
+                }
+                .onChange(of: viewModel.selectedPeriod, initial: true) {
+                    Task {
+                        await viewModel.activate()
+                    }
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -18,9 +36,6 @@ struct ContentView: View {
                     }
                 }
             }
-            .task {
-                await viewModel.activate()
-            }
         }
     }
 }
@@ -28,14 +43,25 @@ struct ContentView: View {
 
 extension ContentView {
     class ViewModel: ObservableObject {
-        @Published var entries = [Entry]()
+        @Published var entries = [TotalEntriesPerPeriod]()
+        @Published var selectedPeriod: String = "day"
         let helper: KoinHelper = KoinHelper()
+        private var currentTask: Task<Void, Never>?
         
         @MainActor
         func activate() async {
-            for await entries in helper.entrySubscription() {
-                self.entries = entries
+            currentTask?.cancel()
+            
+            let task = Task {
+                for await entries in helper.entrySubscription(period: selectedPeriod) {
+                    guard !Task.isCancelled else { return }
+                    self.entries = entries
+                }
             }
+            
+            currentTask = task
+            
+            await task.value
         }
         
         func addEntry() {
@@ -43,8 +69,7 @@ extension ContentView {
                 try? await self.helper.addEntry()
             }
         }
-        
     }
 }
 
-extension Entry: Identifiable {}
+extension TotalEntriesPerPeriod: Identifiable {}
