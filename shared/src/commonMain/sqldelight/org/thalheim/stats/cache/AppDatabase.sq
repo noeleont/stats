@@ -10,3 +10,48 @@ VALUES(?);
 selectAllEntriesInfo:
 SELECT Entry.*
 FROM Entry;
+
+getTotalEntriesPerPeriod:
+WITH RECURSIVE DateRange AS (
+    SELECT
+        CASE :period
+            WHEN 'day' THEN DATE(:start)
+            WHEN 'week' THEN DATE(:start, 'weekday 0', '-6 days')  -- Adjust to start from the previous Sunday
+            WHEN 'month' THEN DATE(:start, 'start of month')
+        END AS date
+    UNION ALL
+    SELECT
+        CASE :period
+            WHEN 'day' THEN DATE(date, '+1 day')
+            WHEN 'week' THEN DATE(date, '+7 days')
+            WHEN 'month' THEN DATE(date, '+1 month')
+        END
+    FROM DateRange
+    WHERE date <
+        CASE :period
+            WHEN 'day' THEN DATE(:end)
+            WHEN 'week' THEN DATE(:end, 'weekday 0', '-6 days')  -- Adjust to end on the last Saturday
+            WHEN 'month' THEN DATE(:end, 'start of month', '+1 month', '-1 day')
+        END
+)
+SELECT
+    CASE :period
+        WHEN 'day' THEN dr.date
+        WHEN 'week' THEN strftime('%Y-%W', dr.date)
+        WHEN 'month' THEN strftime('%Y-%m', dr.date)
+    END AS period,
+    COALESCE(COUNT(e.id), 0) AS totalEntries
+FROM DateRange dr
+LEFT JOIN Entry e ON
+    CASE :period
+        WHEN 'day' THEN strftime('%Y-%m-%d', datetime(e.dateUTC / 1000, 'unixepoch'))
+        WHEN 'week' THEN strftime('%Y-%W', datetime(e.dateUTC / 1000, 'unixepoch'))
+        WHEN 'month' THEN strftime('%Y-%m', datetime(e.dateUTC / 1000, 'unixepoch'))
+    END =
+    CASE :period
+        WHEN 'day' THEN dr.date
+        WHEN 'week' THEN strftime('%Y-%W', dr.date)
+        WHEN 'month' THEN strftime('%Y-%m', dr.date)
+    END
+GROUP BY period
+ORDER BY period;
